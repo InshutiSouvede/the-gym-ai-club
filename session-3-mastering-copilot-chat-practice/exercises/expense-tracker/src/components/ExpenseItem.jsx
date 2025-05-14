@@ -10,6 +10,7 @@ function ExpenseItem({ expense, onDelete }) {
             <div>
                 <h3 className="font-medium text-gray-800">{expense.title}</h3>
                 <p className="text-sm text-gray-500">{formatDate(expense.date)}</p>
+                <p className="text-sm text-gray-500">Category: {expense.category}</p>
             </div>
 
             <div className="flex items-center">

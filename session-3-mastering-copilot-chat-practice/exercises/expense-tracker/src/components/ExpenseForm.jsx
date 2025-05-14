@@ -4,20 +4,13 @@ function ExpenseForm({ onAddExpense }) {
     const [title, setTitle] = useState('')
     const [amount, setAmount] = useState('')
     const [date, setDate] = useState('')
-
+    const [category, setCategory] = useState('')
     const handleSubmit = (e) => {
-        e.preventDefault()
-
-        // Basic validation
-        if (!title || !amount || !date) {
-            alert('Please fill in all fields')
-            return
-        }
-
         const expenseData = {
             title,
             amount: parseFloat(amount),
-            date
+            date,
+            category
         }
 
         onAddExpense(expenseData)
@@ -26,6 +19,7 @@ function ExpenseForm({ onAddExpense }) {
         setTitle('')
         setAmount('')
         setDate('')
+        setCategory('')
     }
 
     return (
@@ -42,8 +36,7 @@ function ExpenseForm({ onAddExpense }) {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="What did you spend on?"
-                    />
+                        placeholder="What did you spend on?" />
                 </div>
 
                 <div className="mb-4">
@@ -57,8 +50,7 @@ function ExpenseForm({ onAddExpense }) {
                         onChange={(e) => setAmount(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="How much did you spend?"
-                        step="0.01"
-                    />
+                        step="0.01" />
                 </div>
 
                 <div className="mb-4">
@@ -70,16 +62,32 @@ function ExpenseForm({ onAddExpense }) {
                         id="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
 
-                <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                <div className="mb-4">
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                </label>
+                <select
+                    id="category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    Add Expense
-                </button>
+                    <option value="">Select a category</option>
+                    <option value="food">Food</option>
+                    <option value="transport">Transport</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+                Add Expense
+            </button>
             </form>
         </div>
     )

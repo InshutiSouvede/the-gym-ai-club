@@ -37,11 +37,26 @@ function App() {
     setExpenses(expenses.filter(expense => expense.id !== id))
   }
 
+  const [filter, setFilter] = useState('')
+
+  const filteredExpenses = filter
+    ? expenses.filter(expense => expense.title.toLowerCase().includes(filter.toLowerCase()))
+    : expenses
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">Expense Tracker</h1>
-      <ExpenseForm onAddExpense={addExpense} />
-      <ExpenseList expenses={expenses} onDeleteExpense={deleteExpense} />
+      <ExpenseForm />
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Filter by category"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border p-2 w-full"
+        />
+      </div>
+      <ExpenseList expenses={filteredExpenses} onDeleteExpense={deleteExpense} />
     </div>
   )
 }

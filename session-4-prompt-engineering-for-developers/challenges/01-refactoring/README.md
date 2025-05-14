@@ -8,25 +8,63 @@ This challenge focuses on refactoring poorly written code. You'll practice using
 
 ```javascript
 // user-processor.js
-function processData(d) {
-  var res = [];
-  for(var i=0; i<d.length; i++) {
-    if(d[i].a == true) {
-      var x = d[i].b * 2;
-      res.push({id: d[i].id, val: x});
-    }
-  }
-  return res;
+/**
+ * Represents a user data object.
+ */
+export interface UserData {
+  id: number;
+  a: boolean;
+  b: number | null;
+  name: string;
+  active: boolean;
 }
 
-// Example usage
-const userData = [
-  {id: 1, a: true, b: 10, name: "John", active: true},
-  {id: 2, a: false, b: 20, name: "Alice", active: false},
-  {id: 3, a: true, b: 15, name: "Bob", active: true},
-  {id: 4, a: true, b: null, name: "Sarah", active: true}
+/**
+ * Represents the processed result for a user.
+ */
+export interface ProcessedUser {
+  id: number;
+  val: number;
+}
+
+/**
+ * Processes an array of user data objects.
+ * Filters for items where 'a' is true and 'b' is a valid number,
+ * then returns an array of objects with doubled 'b' values.
+ *
+ * @param users - The array of user data objects to process.
+ * @returns An array of processed user objects.
+ * @throws {TypeError} If the input is not a valid array.
+ */
+export function extractActiveUserValues(users: UserData[]): ProcessedUser[] {
+  if (!Array.isArray(users)) {
+    throw new TypeError('Input must be an array of user data objects.');
+  }
+
+  return users
+    .filter(
+      (user) =>
+        user &&
+        typeof user.id === 'number' &&
+        user.a === true &&
+        typeof user.b === 'number'
+    )
+    .map((user) => ({
+      id: user.id,
+      val: user.b! * 2,
+    }));
+}
+
+// Example usage:
+const userData: UserData[] = [
+  { id: 1, a: true, b: 10, name: "John", active: true },
+  { id: 2, a: false, b: 20, name: "Alice", active: false },
+  { id: 3, a: true, b: 15, name: "Bob", active: true },
+  { id: 4, a: true, b: null, name: "Sarah", active: true },
 ];
 
+console.log(extractActiveUserValues(userData));
+// Output: [ { id: 1, val: 20 }, { id: 3, val: 30 } ]
 // This function is used in multiple places in a larger codebase
 // and other developers have complained about it being difficult to understand
 // and prone to errors.

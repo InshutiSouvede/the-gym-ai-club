@@ -10,83 +10,233 @@ This challenge simulates a common developer scenario: working with an undocument
 // You've discovered this API endpoint that returns data you need for your application
 // Unfortunately, there's no documentation available, and you only have this sample response
 
-const apiResponse = {
-  "meta": {
-    "status": "ok",
-    "pagination": {
-      "page": 1, 
-      "per_page": 10, 
-      "total": 42,
-      "pages": 5
-    },
-    "request_id": "f7a8b9c0-d1e2-3f4g-5h6i-7j8k9l0m1n2o"
-  },
-  "data": [
-    {
-      "uid": "a1b2c3", 
-      "type": "event", 
-      "created_at": "2023-05-18T14:32:21Z",
-      "modified_at": "2023-05-20T09:12:45Z",
-      "attrs": {
-        "name": "Annual Tech Conference", 
-        "date": "2023-06-15", 
-        "time": "09:00",
-        "duration": 480,
-        "location": {
-          "venue": "City Convention Center",
-          "address": "123 Main St",
-          "city": "San Francisco",
-          "state": "CA",
-          "zip": "94107"
-        },
-        "status": 1,
-        "max_attendees": 500,
-        "current_attendees": 328,
-        "organizer_id": "org_12345",
-        "tags": ["tech", "conference", "annual"]
-      }
-    },
-    {
-      "uid": "d4e5f6", 
-      "type": "meeting", 
-      "created_at": "2023-05-19T10:11:22Z",
-      "modified_at": "2023-05-19T10:11:22Z",
-      "attrs": {
-        "title": "Weekly Team Sync", 
-        "time": "14:00", 
-        "date": "2023-05-22",
-        "duration": 60,
-        "location": {
-          "type": "virtual",
-          "platform": "Zoom",
-          "url": "https://zoom.us/j/123456789"
-        },
-        "recurring": true, 
-        "frequency": "weekly",
-        "status": 2,
-        "organizer_id": "usr_abcdef",
-        "team_id": "team_123456",
-        "tags": ["team", "sync", "weekly"]
-      }
-    },
-    {
-      "uid": "g7h8i9", 
-      "type": "task", 
-      "created_at": "2023-05-17T16:43:55Z",
-      "modified_at": "2023-05-19T11:22:33Z",
-      "attrs": {
-        "title": "Update Documentation", 
-        "description": "Update API documentation with new endpoints",
-        "deadline": "2023-05-25T17:00:00Z",
-        "priority": 2,
-        "status": 0,
-        "assigned_to": "usr_fedcba",
-        "project_id": "proj_987654",
-        "tags": ["documentation", "api", "urgent"]
-      }
-    }
-  ]
+// --- 1. TypeScript Interfaces ---
+
+/**
+ * Pagination metadata for API responses.
+ */
+export interface ApiPagination {
+  page: number;
+  per_page: number;
+  total: number;
+  pages: number;
 }
+
+/**
+ * Meta information included in API responses.
+ */
+export interface ApiMeta {
+  status: string;
+  pagination: ApiPagination;
+  request_id: string;
+}
+
+/**
+ * Location details for events and meetings.
+ */
+export interface PhysicalLocation {
+  venue: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+export interface VirtualLocation {
+  type: 'virtual';
+  platform: string;
+  url: string;
+}
+
+/**
+ * Attributes for an Event item.
+ */
+export interface EventAttrs {
+  name: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  duration: number; // minutes
+  location: PhysicalLocation;
+  status: number;
+  max_attendees: number;
+  current_attendees: number;
+  organizer_id: string;
+  tags: string[];
+}
+
+/**
+ * Attributes for a Meeting item.
+ */
+export interface MeetingAttrs {
+  title: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  duration: number; // minutes
+  location: VirtualLocation;
+  recurring: boolean;
+  frequency: string;
+  status: number;
+  organizer_id: string;
+  team_id: string;
+  tags: string[];
+}
+
+/**
+ * Attributes for a Task item.
+ */
+export interface TaskAttrs {
+  title: string;
+  description: string;
+  deadline: string; // ISO date string
+  priority: number;
+  status: number;
+  assigned_to: string;
+  project_id: string;
+  tags: string[];
+}
+
+/**
+ * Discriminated union for all possible item types.
+ */
+export type ApiItem =
+  | {
+      uid: string;
+      type: 'event';
+      created_at: string;
+      modified_at: string;
+      attrs: EventAttrs;
+    }
+  | {
+      uid: string;
+      type: 'meeting';
+      created_at: string;
+      modified_at: string;
+      attrs: MeetingAttrs;
+    }
+  | {
+      uid: string;
+      type: 'task';
+      created_at: string;
+      modified_at: string;
+      attrs: TaskAttrs;
+    };
+
+/**
+ * The full API response structure.
+ */
+export interface ApiResponse {
+  meta: ApiMeta;
+  data: ApiItem[];
+}
+
+// --- 2. Utility Functions & Class ---
+
+/**
+ * Fetches a page of data from the API.
+ * @param page The page number to fetch.
+ * @param perPage Number of items per page.
+ * @returns The API response.
+ */
+export async function fetchApiPage(
+  page: number = 1,
+  perPage: number = 10
+): Promise<ApiResponse> {
+  try {
+    // Replace with your actual API endpoint
+    const url = `https://api.example.com/items?page=${page}&per_page=${perPage}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    const data: ApiResponse = await response.json();
+    return data;
+  } catch (error) {
+    // Error handling
+    throw new Error(`Failed to fetch API data: ${(error as Error).message}`);
+  }
+}
+
+/**
+ * Fetches all pages of data from the API.
+ * @param perPage Number of items per page.
+ * @returns All items from all pages.
+ */
+export async function fetchAllApiItems(perPage: number = 10): Promise<ApiItem[]> {
+  let page = 1;
+  let allItems: ApiItem[] = [];
+  let totalPages = 1;
+
+  do {
+    const response = await fetchApiPage(page, perPage);
+    allItems = allItems.concat(response.data);
+    totalPages = response.meta.pagination.pages;
+    page++;
+  } while (page <= totalPages);
+
+  return allItems;
+}
+
+/**
+ * Filters items by type.
+ * @param items The array of items.
+ * @param type The type to filter by ('event', 'meeting', 'task').
+ */
+export function filterByType(items: ApiItem[], type: ApiItem['type']): ApiItem[] {
+  return items.filter(item => item.type === type);
+}
+
+/**
+ * Searches items by keyword in title/name/description/tags.
+ * @param items The array of items.
+ * @param keyword The keyword to search for.
+ */
+export function searchItems(items: ApiItem[], keyword: string): ApiItem[] {
+  const lower = keyword.toLowerCase();
+  return items.filter(item => {
+    if (item.type === 'event') {
+      return (
+        item.attrs.name.toLowerCase().includes(lower) ||
+        item.attrs.tags.some(tag => tag.toLowerCase().includes(lower))
+      );
+    }
+    if (item.type === 'meeting') {
+      return (
+        item.attrs.title.toLowerCase().includes(lower) ||
+        item.attrs.tags.some(tag => tag.toLowerCase().includes(lower))
+      );
+    }
+    if (item.type === 'task') {
+      return (
+        item.attrs.title.toLowerCase().includes(lower) ||
+        item.attrs.description.toLowerCase().includes(lower) ||
+        item.attrs.tags.some(tag => tag.toLowerCase().includes(lower))
+      );
+    }
+    return false;
+  });
+}
+
+// --- 3. Example Usage ---
+
+async function exampleUsage() {
+  try {
+    // Fetch all items from the API (with pagination)
+    const allItems = await fetchAllApiItems(10);
+
+    // Filter for events only
+    const events = filterByType(allItems, 'event');
+    console.log('Events:', events);
+
+    // Search for items with the keyword "team"
+    const teamItems = searchItems(allItems, 'team');
+    console.log('Items matching "team":', teamItems);
+  } catch (error) {
+    console.error('Error:', (error as Error).message);
+  }
+}
+
+// Uncomment to run the example
+// exampleUsage();
 
 // You need to create a function that:
 // 1. Fetches this data from the API

@@ -9,68 +9,78 @@ This challenge focuses on using AI to help identify and fix non-obvious bugs in 
 ```jsx
 // UserProfile.jsx
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
+// Mock implementations (replace with real imports in actual app)
 import { fetchUserData } from '../api/userService';
 import UserStats from './UserStats';
 import UserActivity from './UserActivity';
 
 function UserProfile({ userId }) {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
+    let isMounted = true;
     async function fetchUser() {
       setLoading(true);
       setError(null);
-      
       try {
         const response = await fetchUserData(userId);
-        setUser(response);
+        if (isMounted) setUser(response);
       } catch (err) {
-        setError('Failed to load user profile');
+        if (isMounted) setError('Failed to load user profile');
         console.error(err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
-    
     fetchUser();
-  }); // Missing dependency array
-  
+    return () => { isMounted = false; };
+  }, [userId]);
+
   function handleUpdateProfile(updatedData) {
-    setUser({ ...user, ...updatedData });
+    setUser(prevUser => prevUser ? { ...prevUser, ...updatedData } : prevUser);
   }
-  
-  if (error) return <div className="error-message">{error}</div>;
-  
+
+  if (error) return <div className="error-message" role="alert">{error}</div>;
+
   return (
     <div className="profile">
-      {loading && <div className="loading-spinner">Loading...</div>}
-      
-      {!loading && (
+      {loading && <div className="loading-spinner" aria-live="polite">Loading...</div>}
+
+      {!loading && user && (
         <>
           <header className="profile-header">
-            <img 
-              src={user.avatarUrl} 
-              alt={`${user.name}'s avatar`} 
+            <img
+              src={user.avatarUrl}
+              alt={user.name ? `${user.name}'s avatar` : 'User avatar'}
               className="avatar"
             />
-            <h1>{user.name}</h1>
-            <p className="user-title">{user.jobTitle}</p>
+            <h1>{user.name || 'User'}</h1>
+            <p className="user-title">{user.jobTitle || 'No title'}</p>
           </header>
-          
+
           <section className="profile-details">
-            <p>{user.email}</p>
-            <p>{user.location}</p>
-            <p>Member since: {new Date(user.joinDate).toLocaleDateString()}</p>
+            <p>{user.email || 'No email'}</p>
+            <p>{user.location || 'No location'}</p>
+            <p>
+              Member since:{' '}
+              {user.joinDate
+                ? new Date(user.joinDate).toLocaleDateString()
+                : 'Unknown'}
+            </p>
           </section>
-          
+
           <UserStats statistics={user.stats} />
           <UserActivity userId={userId} limit={5} />
-          
-          <button 
+
+          <button
             onClick={() => handleUpdateProfile({ status: 'active' })}
             className="status-button"
+            aria-label="Set user status to active"
+            type="button"
           >
             Set Active
           </button>
@@ -80,44 +90,54 @@ function UserProfile({ userId }) {
   );
 }
 
-export default UserProfile;
+UserProfile.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+};
 
-// Mock implementations of imported components
 // UserStats.jsx
 function UserStats({ statistics }) {
+  if (!statistics) return null;
   return (
     <div className="user-stats">
       <h2>User Statistics</h2>
-      {statistics && (
-        <ul>
-          <li>Posts: {statistics.posts}</li>
-          <li>Comments: {statistics.comments}</li>
-          <li>Likes received: {statistics.likesReceived}</li>
-        </ul>
-      )}
+      <ul>
+        <li>Posts: {statistics.posts}</li>
+        <li>Comments: {statistics.comments}</li>
+        <li>Likes received: {statistics.likesReceived}</li>
+      </ul>
     </div>
   );
 }
+UserStats.propTypes = {
+  statistics: PropTypes.shape({
+    posts: PropTypes.number,
+    comments: PropTypes.number,
+    likesReceived: PropTypes.number,
+  }),
+};
 
 // UserActivity.jsx
 function UserActivity({ userId, limit }) {
   const [activities, setActivities] = useState([]);
-  
+
   useEffect(() => {
-    // Simulating API call
+    let isMounted = true;
     setTimeout(() => {
-      setActivities([
-        { id: 1, type: 'post', content: 'Created a new post', date: '2023-05-15' },
-        { id: 2, type: 'comment', content: 'Commented on a thread', date: '2023-05-14' }
-      ]);
+      if (isMounted) {
+        setActivities([
+          { id: 1, type: 'post', content: 'Created a new post', date: '2023-05-15' },
+          { id: 2, type: 'comment', content: 'Commented on a thread', date: '2023-05-14' }
+        ]);
+      }
     }, 500);
+    return () => { isMounted = false; };
   }, [userId]);
-  
+
   return (
     <div className="user-activity">
       <h2>Recent Activity</h2>
       <ul>
-        {activities.map(activity => (
+        {activities.slice(0, limit).map(activity => (
           <li key={activity.id}>
             {activity.content} - {activity.date}
           </li>
@@ -126,17 +146,17 @@ function UserActivity({ userId, limit }) {
     </div>
   );
 }
+UserActivity.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  limit: PropTypes.number,
+};
 
 // userService.js (API mock)
 export async function fetchUserData(userId) {
-  // Simulating API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Simulating API response
   if (userId === undefined) {
     throw new Error('userId is required');
   }
-  
   return {
     id: userId,
     name: 'Jane Smith',
